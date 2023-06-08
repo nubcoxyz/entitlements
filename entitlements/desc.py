@@ -49,16 +49,17 @@ def pull_entitlements_from_db(db_path):
         with sqlite3.connect(db_path) as conn:
             c = conn.cursor()
             c.execute('CREATE TABLE IF NOT EXISTS descriptions (entitlement TEXT PRIMARY KEY, description TEXT)')
-            c.execute('SELECT DISTINCT entitlement FROM entitlements LIMIT 50')
+            # c.execute('SELECT DISTINCT entitlement FROM entitlements')
+            c.execute('SELECT DISTINCT entitlement FROM entitlements WHERE entitlement NOT IN (SELECT DISTINCT entitlement FROM descriptions)')
             for entitlement in c.fetchall():
                 try:
                     answer = get_answer(entitlement[0])
                 except OpenAIError as e:
                     print(e)
                     continue
-                sys.stdout.write('.')
-                # print(entitlement[0])
-                # print(answer)
+                #sys.stdout.write('.')
+                print(entitlement[0], flush=True)
+                print(answer, flush=True)
                 c.execute('INSERT OR IGNORE INTO descriptions (entitlement, description) VALUES (?, ?)', (entitlement[0], answer))
                 conn.commit()
     except sqlite3.Error as e:
